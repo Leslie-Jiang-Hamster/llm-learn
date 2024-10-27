@@ -10,6 +10,7 @@ import {
 } from "eventsource-parser";
 import { getSystemPrompt } from "@/utils/utils";
 import Chat from "@/components/Chat";
+import { set } from "zod";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -22,6 +23,34 @@ export default function Home() {
   );
   const [loading, setLoading] = useState(false);
   const [ageGroup, setAgeGroup] = useState("Middle School");
+
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const updateSuggestions = (text: String) => {
+    console.log("!", text);
+
+    if (text.includes("\n1.")) {
+      /*
+      match a markdown style ordered list 
+      */
+      const matches = [...text.matchAll(/\n\d+\.[^\n]+/g)];
+      let newSuggestions: string[] = [];
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const match = matches[i];
+        const suggestion = match[0].match(/\.[^\n]+/)?.[0].slice(1).trim();
+        if (suggestion) {
+          /* if match with like **title**: something, than remove the something and ** mark */
+          if (suggestion.includes(":"))
+            newSuggestions.push(suggestion.split(":")[0].replace(/\*\*/g, ""));
+          else
+            newSuggestions.push(suggestion.replace(/\*\*/g, ""));
+          if (match[0].includes("\n1."))
+            break;
+        }
+      }
+      setSuggestions(newSuggestions.reverse());
+    }
+  }
 
   const handleInitialChat = async () => {
     setShowResult(true);
@@ -53,17 +82,19 @@ export default function Home() {
     if (!data) {
       return;
     }
-    let fullAnswer = "";
 
     const onParse = (event: ParsedEvent | ReconnectInterval) => {
       if (event.type === "event") {
         const data = event.data;
         try {
           const text = JSON.parse(data).text ?? "";
-          fullAnswer += text;
+
+
           // Update messages with each chunk
           setMessages((prev) => {
+            console.log("setMessage", text);
             const lastMessage = prev[prev.length - 1];
+
             if (lastMessage.role === "assistant") {
               return [
                 ...prev.slice(0, -1),
@@ -73,6 +104,7 @@ export default function Home() {
               return [...prev, { role: "assistant", content: text }];
             }
           });
+
         } catch (e) {
           console.error(e);
         }
@@ -85,12 +117,23 @@ export default function Home() {
     const parser = createParser(onParse);
     let done = false;
 
+    let text = "";
+
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
       const chunkValue = decoder.decode(value);
       parser.feed(chunkValue);
+      console.log("chunkValue", chunkValue);
+
+      chunkValue.matchAll(/data: {"text":"([^"]+)"/g).forEach((match) => {
+        text += match[1].replace(/\\n/g, "\n");
+      });
+
+      if (done)
+        updateSuggestions(text);
     }
+    console.log("setLoading(false)");
     setLoading(false);
   };
 
@@ -144,6 +187,7 @@ export default function Home() {
                   setMessages={setMessages}
                   handleChat={handleChat}
                   topic={topic}
+                  suggestions={suggestions}
                 />
                 <Sources sources={sources} isLoading={isLoadingSources} />
               </div>

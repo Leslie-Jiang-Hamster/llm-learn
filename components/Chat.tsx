@@ -12,6 +12,7 @@ export default function Chat({
   setMessages,
   handleChat,
   topic,
+  suggestions,
 }: {
   messages: { role: string; content: string }[];
   disabled: boolean;
@@ -22,6 +23,7 @@ export default function Chat({
   >;
   handleChat: () => void;
   topic: string;
+  suggestions: string[];
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +110,21 @@ export default function Chat({
         </div>
       </div>
 
+      <div className="bg-white lg:p-4">
+        <p className="uppercase text-gray-900">
+          <b>你可能想知道：</b>
+          {/* a button that setpromptvalue as suggestion */}
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              className="ml-2 text-black px-2 py-1 rounded-md border border-solid border-[#C2C2C2] hover:bg-gray-100"
+              onClick={() => setPromptValue(suggestion)}
+            >
+              {suggestion.length > 10 ? `${suggestion.slice(0, 10)}...` : suggestion}
+            </button>
+          ))}
+        </p>
+      </div>
       <div className="bg-white lg:p-4">
         <FinalInputArea
           disabled={disabled}
