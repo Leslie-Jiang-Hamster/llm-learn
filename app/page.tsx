@@ -35,15 +35,26 @@ export default function Home() {
       */
       const matches = [...text.matchAll(/\n\d+\.[^\n]+/g)];
       let newSuggestions: string[] = [];
+      let suggestionStrLengthSum = 0;
       for (let i = matches.length - 1; i >= 0; i--) {
         const match = matches[i];
         const suggestion = match[0].match(/\.[^\n]+/)?.[0].slice(1).trim();
+        
         if (suggestion) {
+          let newSuggestion: string;
           /* if match with like **title**: something, than remove the something and ** mark */
           if (suggestion.includes(":"))
-            newSuggestions.push(suggestion.split(":")[0].replace(/\*\*/g, ""));
+            newSuggestion = suggestion.split(":")[0].replace(/\*\*/g, "");
+          else if (suggestion.includes("："))
+            newSuggestion = suggestion.split("：")[0].replace(/\*\*/g, "");
           else
-            newSuggestions.push(suggestion.replace(/\*\*/g, ""));
+            newSuggestion = suggestion.replace(/\*\*/g, "");
+          newSuggestions.push(newSuggestion);
+
+          suggestionStrLengthSum += newSuggestion.length;
+          if (suggestionStrLengthSum > 200)
+            break;
+
           if (match[0].includes("\n1."))
             break;
         }
