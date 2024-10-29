@@ -113,14 +113,13 @@ export default function Chat({
       <div className="bg-white lg:p-4">
         <p className="uppercase text-gray-900">
           <b>你可能想知道：</b>
-          {/* a button that setpromptvalue as suggestion */}
           {suggestions.map((suggestion, index) => (
             <button
               key={index}
               className="ml-2 text-black px-2 py-1 rounded-md border border-solid border-[#C2C2C2] hover:bg-gray-100"
               onClick={() => setPromptValue(suggestion)}
             >
-              {suggestion.length > 10 ? `${suggestion.slice(0, 10)}...` : suggestion}
+              {suggestion}
             </button>
           ))}
         </p>
